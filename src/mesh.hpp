@@ -21,11 +21,22 @@ public:
 
    Mesh(std::vector<Face> tri, std::vector<vec3> pos);
 
-   uint intersect_triangle(Ray const& ray);
+   std::vector<Face> const& get_faces() const;
+   std::vector<vec3> const& get_pos() const;
 private:
    std::vector<vec3> positions;
    std::vector<Face> triangles;
 };
+
+inline std::vector<Face> const& Mesh::get_faces() const
+{
+   return triangles;
+}
+
+inline std::vector<vec3> const& Mesh::get_pos() const
+{
+   return positions;
+}
 
 
 }

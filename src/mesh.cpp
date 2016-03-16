@@ -153,9 +153,4 @@ Mesh::Mesh(std::vector<Face> tri, std::vector<vec3> pos)
 {
 }
 
-uint Mesh::intersect_triangle(Ray const& ray)
-{
-
-}
-
 }
