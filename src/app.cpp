@@ -83,8 +83,9 @@ App::App(int argc, char const* const* argv)
    glfwSetScrollCallback(window, scroll_callback);
 
 //   #include "mesh.hpp"
-
-
+   Transformation t = camera.transformation();
+   t.position(vec3(0.f, 0.f, -1.f));
+   camera.transformation(t);
 }
 App::~App()
 {
@@ -116,6 +117,15 @@ void App::on_key(int key, int scancode, int action, int mods)
    case GLFW_KEY_ESCAPE:
       glfwSetWindowShouldClose( window, 1 );
       break;
+   case GLFW_KEY_F5:
+      active_renderer = eRaytracer;
+      break;
+   case GLFW_KEY_F6:
+      active_renderer = eRasterizer;
+      break;
+   case GLFW_KEY_F7:
+      active_renderer = eGl;
+      break;
   /* case GLFW_KEY_W:
       directions = set_direction(directions, action == GLFW_PRESS, forward );
       break;
@@ -142,6 +152,8 @@ void App::on_resize(int w, int h)
    win_height = static_cast<u16>(h);
    delete raytracer;
    raytracer = new Raytracer(win_width, win_height);
+   rasterizer = new Rasterizer();
+   gl_renderer = new GlRenderer();
 }
 
 void App::on_scroll(double xoffset, double yoffset)
@@ -179,34 +191,31 @@ int App::run()
       return 1;
    }
    double last_render_time = glfwGetTime();
-   double elapsed_frame_time = 0.0;
+   f32 elapsed_frame_time = 0.0;
    double average_render_time = 0.0;
    // need_redraw = true;
    while (!glfwWindowShouldClose(window))
    {
       double now = glfwGetTime();
-      elapsed_frame_time = now - last_render_time;
+      elapsed_frame_time = static_cast<f32>(now - last_render_time);
       last_render_time = now;
       // Move camera?
-      // move_camera(elapsed_frame_time);
-      // float f_widht = win_width;
-      // float f_height = win_height;
-      // float ratio = f_widht / f_height;
-      // vec3 cam_x = cam.x_axis() * ratio;
-      // vec3 cam_y = cam.y_axis();
-      // vec3 cam_z = cam.z_axis();
-      // vec3 cam_p = cam.position();
-      // auto new_z = -cam_z - cam_x * 0.5f - cam_y * 0.5f;
-      // float rx = 1.0f / float(f_widht);
-      // float ry = 1.0f / float(f_height);
-      // ispc::Vec3f vx = glm_to_ispc(cam_x * rx);
-      // ispc::Vec3f vy = glm_to_ispc(cam_y * ry);
-      // ispc::Vec3f vz = glm_to_ispc(new_z);
-      // ispc::Vec3f p  = glm_to_ispc(cam.position());
+      move_camera(elapsed_frame_time);
+      glClear(GL_COLOR_BUFFER_BIT);
       {
          double start_time = glfwGetTime();
-
-         raytracer->render(camera);
+         switch(active_renderer)
+         {
+         case eRaytracer:
+            raytracer->render(camera);
+            break;
+         case eRasterizer:
+            rasterizer->render(camera);
+            break;
+         case eGl:
+            gl_renderer->render(camera);
+            break;
+         }
          double end_time = glfwGetTime();
 
          average_render_time = average_render_time * 0.90 + (end_time - start_time) * 0.10;
@@ -217,6 +226,15 @@ int App::run()
       glfwPollEvents();
    }
    return 0;
+}
+
+void App::move_camera(f32 dt)
+{
+   glm::vec2 mouse_delta = old_mouse_pos - mouse_pos;
+   old_mouse_pos = mouse_pos;
+
+   vec3 camera_pos = camera.transformation().position() + camera_speed * dt;
+   //camera_speed +=
 }
 
 }

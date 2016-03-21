@@ -7,7 +7,7 @@ namespace potato
 struct Ray
 {
    vec3 origin;
-   f32 lenght;
+   vec3 dir;
 };
 
 }

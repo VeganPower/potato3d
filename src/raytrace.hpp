@@ -21,6 +21,7 @@ public:
    void bake_scene(Scene const& scene);
    void render(Camera const& viewpoint) const;
 private:
+   bool intersect(Ray const& r, Face const& f, vec3& coord) const;
    u16 width;
    u16 height;
    u32* frame_buffer;
