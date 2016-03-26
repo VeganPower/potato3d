@@ -1,6 +1,6 @@
-solution "potato_ray"
+solution "potato"
    configurations { "Debug", "Release" }
-   project "potato_ray"
+   project "potato"
       kind "ConsoleApp"
       language "C++"
       includedirs { "libs/glm" }
