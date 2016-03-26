@@ -1,3 +1,5 @@
+#include "base.hpp"
+
 #include "raytrace.hpp"
 #include <GLFW/glfw3.h>
 #include "scene.hpp"
@@ -16,27 +18,18 @@ Raytracer::Raytracer(u16 w, u16 h)
    : width(w)
    , height(h)
 {
-   frame_buffer = static_cast<u32*>(malloc(sizeof(u32) * width * height));
-   for (int j = 0; j < height; ++j)
-   {
-      int k = j * w;
-      for (int i = 0; i < width; ++i)
-      {
-         int idx = k + i;
-         int o = (i / 16) ^ (j / 16);
-         if (o & 0x1)
-         {
-            frame_buffer[idx] = 0xFFFFFF;
-         }
-         else
-            frame_buffer[idx] = 0x000000;
-      }
-   }
+   on_resize(width, height);
 }
 
 Raytracer::~Raytracer()
 {
-   free(frame_buffer);
+}
+
+void Raytracer::on_resize(u16 w, u16 h)
+{
+   width = w;
+   height = h;
+   frame_buffer = std::unique_ptr<u32>(static_cast<u32*>(malloc(sizeof(u32) * width * height)));
 }
 
 void Raytracer::bake_scene(Scene const& scene)
@@ -51,13 +44,14 @@ void Raytracer::bake_scene(Scene const& scene)
 
 void Raytracer::render(Camera const& viewpoint) const
 {
+   u32* frame_buffer_ptr = frame_buffer.get();
    glm::mat3 mat = glm::mat3_cast(viewpoint.transformation().orientation());
    vec3 cam_pos = viewpoint.transformation().position();
    f32 tan_half_fov = viewpoint.tan_half_fov();
-   f32 ratio = static_cast<f32>(width) / static_cast<f32>(height);
 
    f32 f_width = static_cast<f32>(width);
    f32 f_height = static_cast<f32>(height);
+   f32 ratio = f_width / f_height;
 
    vec3 x_step = 2.f * ratio * tan_half_fov * mat[0];
    vec3 y_step = -2.f * tan_half_fov * mat[1];
@@ -92,10 +86,11 @@ void Raytracer::render(Camera const& viewpoint) const
          u8 r = hit ? (t_coord.s * 255) : 0x00;
          u8 g = hit ? (t_coord.t * 255) : 0x00;
          u8 b = 0;//std::min(std::max(y, 0.f), 1.f) * 255;
-         frame_buffer[idx] = r | g << 8 | b << 16 | 0xFF << 24;
+         frame_buffer_ptr[idx] = r | g << 8 | b << 16 | 0xFF << 24;
       }
    }
-   glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, frame_buffer);
+   // glWindowPos2i(0, 0);
+   glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, frame_buffer_ptr);
 }
 
 

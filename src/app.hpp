@@ -3,6 +3,7 @@
 #include "scene.hpp"
 #include "camera.hpp"
 
+#include <memory>
 
 class GLFWwindow;
 
@@ -16,15 +17,11 @@ class GlRenderer;
 class Rasterizer // Stub
 {
 public:
+   Rasterizer(u16 w, u16 h){}
+   void bake_scene(Scene const& scene){}
+   void on_resize(u16 w, u16 h){}
    void render(Camera const&){}
 };
-
-class GlRenderer // Stub
-{
-public:
-   void render(Camera const&){}
-};
-
 
 enum RendererType
 {
@@ -59,9 +56,9 @@ private:
    // Transformation ;
    Scene scene;
 
-   Raytracer*  raytracer;
-   Rasterizer* rasterizer;
-   GlRenderer* gl_renderer;
+   std::unique_ptr<Raytracer>  raytracer;
+   std::unique_ptr<Rasterizer> rasterizer;
+   std::unique_ptr<GlRenderer> gl_renderer;
 
    glm::vec2 mouse_pos;
    glm::vec2 old_mouse_pos;

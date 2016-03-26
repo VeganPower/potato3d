@@ -1,6 +1,7 @@
 #include "app.hpp"
 #include <GLFW/glfw3.h>
 #include "raytrace.hpp"
+#include "gl_renderer.hpp"
 
 #include "mesh.hpp"
 
@@ -71,7 +72,11 @@ App::App(int argc, char const* const* argv)
       zombie = true;
       return;
    }
-   on_resize(win_width, win_height);
+
+   raytracer = std::unique_ptr<Raytracer>( new Raytracer(win_width, win_height));
+   rasterizer = std::unique_ptr<Rasterizer>( new Rasterizer(win_width, win_height));
+   gl_renderer = std::unique_ptr<GlRenderer>( new GlRenderer());
+
    // Setup callback
    glfwSetCursorPosCallback(window, cursor_pos_callback);
    glfwSetMouseButtonCallback(window, mouse_button_callback);
@@ -89,9 +94,6 @@ App::App(int argc, char const* const* argv)
 }
 App::~App()
 {
-   delete raytracer;
-   delete rasterizer;
-   delete gl_renderer;
    glfwTerminate();
 }
 
@@ -107,15 +109,15 @@ void App::on_mouse_button(int button, int action, int mods)
 
 void App::on_key(int key, int scancode, int action, int mods)
 {
-   if( action == GLFW_REPEAT )
+   if (action == GLFW_REPEAT)
    {
       return;
    }
-   switch( key )
+   switch (key)
    {
    case GLFW_KEY_Q:
    case GLFW_KEY_ESCAPE:
-      glfwSetWindowShouldClose( window, 1 );
+      glfwSetWindowShouldClose(window, 1);
       break;
    case GLFW_KEY_F5:
       active_renderer = eRaytracer;
@@ -150,10 +152,13 @@ void App::on_resize(int w, int h)
 {
    win_width = static_cast<u16>(w);
    win_height = static_cast<u16>(h);
-   delete raytracer;
-   raytracer = new Raytracer(win_width, win_height);
-   rasterizer = new Rasterizer();
-   gl_renderer = new GlRenderer();
+
+   raytracer->on_resize(win_width, win_height);
+   // rasterizer->on_resize(win_width, win_height);
+   gl_renderer->on_resize(win_width, win_height);
+   GLsizei w_i = static_cast<GLsizei>(w);
+   GLsizei h_i = static_cast<GLsizei>(h);
+   glViewport(0, 0, w_i, h_i);
 }
 
 void App::on_scroll(double xoffset, double yoffset)
@@ -176,12 +181,12 @@ void App::load_scene()
    pos.push_back(b);
    pos.push_back(c);
 
-   Mesh::ptr mesh = std::make_shared<Mesh>( tri, pos);
+   Mesh::ptr mesh = std::make_shared<Mesh>(tri, pos);
    scene.AddMesh(mesh);
 
    raytracer->bake_scene(scene);
    // rasterizer->bake_scene(scene);
-   // gl_renderer->bake_scene(scene);
+   gl_renderer->bake_scene(scene);
 }
 
 int App::run()
@@ -204,7 +209,7 @@ int App::run()
       glClear(GL_COLOR_BUFFER_BIT);
       {
          double start_time = glfwGetTime();
-         switch(active_renderer)
+         switch (active_renderer)
          {
          case eRaytracer:
             raytracer->render(camera);
